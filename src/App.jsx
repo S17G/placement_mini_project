@@ -1,6 +1,8 @@
 import { useState } from "react";
 import axios from "axios";
 
+const BACKEND_URL = "https://placement-api-dgtk.onrender.com";
+
 function App() {
   const [formData, setFormData] = useState({
     tenth: "", twelfth: "", lastSem: "", cgpa: "",
@@ -16,25 +18,39 @@ function App() {
   };
 
   const calculateIQ = () => {
-    const t = Number(formData.tenth);
-    const tw = Number(formData.twelfth);
+    const t = Number(formData.tenth) || 0;
+    const tw = Number(formData.twelfth) || 0;
     return ((t + tw) / 2) * 1.2;
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e) => {
+    if (e) e.preventDefault();
     setLoading(true);
+    setResult(null);
+
     const iq = calculateIQ();
     const features = [
-      iq, Number(formData.lastSem), Number(formData.cgpa),
-      Number(formData.academic), Number(formData.internships),
-      Number(formData.extracurricular), Number(formData.communication),
-      Number(formData.projects)
+      iq, 
+      Number(formData.lastSem) || 0, 
+      Number(formData.cgpa) || 0,
+      Number(formData.academic) || 0, 
+      Number(formData.internships) || 0,
+      Number(formData.extracurricular) || 0, 
+      Number(formData.communication) || 0,
+      Number(formData.projects) || 0
     ];
 
     try {
-      const res = await axios.post("http://localhost:5001/predict", { features });
-      setResult(res.data.prediction === 1 ? "success" : "improve");
+      // Calling your Live Render Backend
+      const res = await axios.post(`${BACKEND_URL}/predict`, { features });
+      
+      if (res.data && res.data.prediction !== undefined) {
+        setResult(res.data.prediction === 1 ? "success" : "improve");
+      } else {
+        setResult("error");
+      }
     } catch (err) {
+      console.error("API Error:", err);
       setResult("error");
     } finally {
       setLoading(false);
@@ -56,6 +72,7 @@ function App() {
   return (
     <div style={styles.wrapper}>
       <div style={styles.card}>
+        {/* Left Panel: Status & Results */}
         <div style={styles.leftPanel}>
           <div style={styles.brand}>
             <span style={styles.logoIcon}>✦</span>
@@ -63,28 +80,43 @@ function App() {
           </div>
           <h1 style={styles.mainHeading}>Discover your <br/>placement <span style={{color: '#4f46e5'}}>potential.</span></h1>
           <p style={styles.description}>
-            Our algorithm analyzes your academic and professional data to provide a personalized placement outlook.
+            Our AI model analyzes your profile against thousands of historical data points to predict your career trajectory.
           </p>
           
-          {result && (
-            <div style={{...styles.resultBox, 
-              backgroundColor: result === 'success' ? '#f0fdf4' : result === 'improve' ? '#fffbeb' : '#fef2f2',
-              borderColor: result === 'success' ? '#bbf7d0' : result === 'improve' ? '#fde68a' : '#fecaca'
-            }}>
-              <h4 style={{...styles.resultTitle, color: result === 'success' ? '#166534' : result === 'improve' ? '#92400e' : '#991b1b'}}>
-                {result === 'success' ? "Sky's the Limit!" : result === 'improve' ? "Growth Opportunity" : "Service Interrupted"}
-              </h4>
-              <p style={{...styles.resultText, color: result === 'success' ? '#15803d' : result === 'improve' ? '#b45309' : '#b91c1c'}}>
-                {result === 'success' 
-                  ? "Your profile is exceptional! Recruiters value your balance of academics and skills. You're on the right track for a top-tier offer." 
-                  : result === 'improve' 
-                  ? "You have a solid foundation, but adding 1-2 more high-impact projects or certifications could significantly boost your odds." 
-                  : "We're having trouble reaching the analysis engine. Please try again in a few moments."}
-              </p>
-            </div>
-          )}
+          <div style={styles.resultArea}>
+            {!result && !loading && (
+              <div style={styles.placeholder}>Enter your details to generate a report.</div>
+            )}
+
+            {loading && (
+              <div style={styles.loadingBox}>
+                <div style={styles.spinner}></div>
+                <p>AI is analyzing your profile...</p>
+                <small style={{color: '#94a3b8'}}>Initial wake-up may take ~30 seconds</small>
+              </div>
+            )}
+
+            {result && !loading && (
+              <div style={{...styles.resultBox, 
+                backgroundColor: result === 'success' ? '#f0fdf4' : result === 'improve' ? '#fffbeb' : '#fef2f2',
+                borderColor: result === 'success' ? '#bbf7d0' : result === 'improve' ? '#fde68a' : '#fecaca'
+              }}>
+                <h4 style={{...styles.resultTitle, color: result === 'success' ? '#166534' : result === 'improve' ? '#92400e' : '#991b1b'}}>
+                  {result === 'success' ? "Sky's the Limit!" : result === 'improve' ? "Growth Opportunity" : "Service Error"}
+                </h4>
+                <p style={{...styles.resultText, color: result === 'success' ? '#15803d' : result === 'improve' ? '#b45309' : '#b91c1c'}}>
+                  {result === 'success' 
+                    ? "Your profile is exceptional! You demonstrate a strong balance of academics and practical skills. You're in a great position for top-tier placements." 
+                    : result === 'improve' 
+                    ? "You're on your way! To increase your odds, focus on building 1-2 more specialized projects or improving your technical certifications." 
+                    : "Something went wrong. Please ensure the backend server is active and try again."}
+                </p>
+              </div>
+            )}
+          </div>
         </div>
 
+        {/* Right Panel: Form Inputs */}
         <div style={styles.rightPanel}>
           <div style={styles.formGrid}>
             {fields.map((f) => (
@@ -92,9 +124,12 @@ function App() {
                 <label style={styles.inputLabel}>{f.label}</label>
                 <input 
                   name={f.id} 
+                  type="number"
                   placeholder="0" 
+                  value={formData[f.id]}
                   onChange={handleChange} 
                   style={styles.softInput}
+                  disabled={loading}
                 />
               </div>
             ))}
@@ -102,9 +137,13 @@ function App() {
           <button 
             onClick={handleSubmit} 
             disabled={loading}
-            style={{...styles.primaryBtn, backgroundColor: loading ? '#9ca3af' : '#4f46e5'}}
+            style={{
+              ...styles.primaryBtn, 
+              backgroundColor: loading ? '#9ca3af' : '#4f46e5',
+              cursor: loading ? 'wait' : 'pointer'
+            }}
           >
-            {loading ? "Analyzing Profile..." : "Analyze My Profile"}
+            {loading ? "Processing..." : "Generate Analysis"}
           </button>
         </div>
       </div>
@@ -118,24 +157,25 @@ const styles = {
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    background: "#f8fafc", // Soft off-white
-    fontFamily: "'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+    background: "#f1f5f9",
+    fontFamily: "'Inter', sans-serif",
     padding: "20px"
   },
   card: {
     display: "flex",
+    flexWrap: "wrap",
     width: "100%",
-    maxWidth: "1000px",
+    maxWidth: "1050px",
     background: "#ffffff",
-    borderRadius: "32px",
-    boxShadow: "0 20px 40px rgba(0,0,0,0.05)",
+    borderRadius: "24px",
+    boxShadow: "0 25px 50px -12px rgba(0,0,0,0.08)",
     overflow: "hidden",
-    border: "1px solid #f1f5f9"
   },
   leftPanel: {
     flex: 1,
-    padding: "60px",
-    background: "#fdfdfd",
+    minWidth: "350px",
+    padding: "50px",
+    background: "#fafafa",
     borderRight: "1px solid #f1f5f9",
     display: "flex",
     flexDirection: "column"
@@ -143,92 +183,50 @@ const styles = {
   brand: {
     display: "flex",
     alignItems: "center",
-    gap: "10px",
-    marginBottom: "40px"
+    gap: "8px",
+    marginBottom: "30px"
   },
-  logoIcon: {
-    fontSize: "24px",
-    color: "#4f46e5",
-    fontWeight: "bold"
-  },
-  logoText: {
-    fontSize: "18px",
-    fontWeight: "700",
-    color: "#1e293b",
-    letterSpacing: "-0.5px"
-  },
-  mainHeading: {
-    fontSize: "36px",
-    color: "#1e293b",
-    lineHeight: "1.2",
-    marginBottom: "20px",
-    fontWeight: "800"
-  },
-  description: {
-    color: "#64748b",
-    fontSize: "16px",
-    lineHeight: "1.6",
-    marginBottom: "40px"
-  },
-  rightPanel: {
-    flex: 1.2,
-    padding: "60px",
-    background: "#ffffff",
-  },
-  formGrid: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "24px",
-  },
-  inputContainer: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "8px"
-  },
-  inputLabel: {
-    fontSize: "13px",
-    fontWeight: "600",
-    color: "#475569"
-  },
+  logoIcon: { fontSize: "22px", color: "#4f46e5", fontWeight: "bold" },
+  logoText: { fontSize: "16px", fontWeight: "700", color: "#1e293b" },
+  mainHeading: { fontSize: "32px", color: "#1e293b", fontWeight: "800", marginBottom: "15px" },
+  description: { color: "#64748b", fontSize: "15px", lineHeight: "1.6", marginBottom: "30px" },
+  resultArea: { marginTop: "auto", minHeight: "150px", display: "flex", alignItems: "center" },
+  placeholder: { color: "#cbd5e1", fontSize: "14px", fontStyle: "italic", textAlign: "center", width: "100%" },
+  rightPanel: { flex: 1.2, minWidth: "350px", padding: "50px" },
+  formGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" },
+  inputContainer: { display: "flex", flexDirection: "column", gap: "6px" },
+  inputLabel: { fontSize: "12px", fontWeight: "600", color: "#475569", textTransform: "uppercase" },
   softInput: {
-    padding: "12px 16px",
-    background: "#f8fafc",
-    border: "1.5px solid #e2e8f0",
-    borderRadius: "12px",
+    padding: "12px",
+    background: "#fff",
+    border: "1px solid #e2e8f0",
+    borderRadius: "10px",
     fontSize: "14px",
     outline: "none",
-    transition: "all 0.2s ease"
+    transition: "border-color 0.2s"
   },
   primaryBtn: {
     width: "100%",
-    marginTop: "40px",
-    padding: "16px",
+    marginTop: "30px",
+    padding: "15px",
     color: "white",
     border: "none",
-    borderRadius: "12px",
-    fontSize: "16px",
+    borderRadius: "10px",
+    fontSize: "15px",
     fontWeight: "600",
-    cursor: "pointer",
-    transition: "transform 0.2s ease, box-shadow 0.2s ease",
-    boxShadow: "0 4px 12px rgba(79, 70, 229, 0.2)"
+    transition: "all 0.3s ease"
   },
-  resultBox: {
-    marginTop: "auto",
-    padding: "24px",
-    borderRadius: "20px",
-    border: "1px solid",
-    animation: "fadeIn 0.6s ease"
-  },
-  resultTitle: {
-    margin: "0 0 8px 0",
-    fontSize: "18px",
-    fontWeight: "700"
-  },
-  resultText: {
-    margin: 0,
-    fontSize: "14px",
-    lineHeight: "1.5"
+  resultBox: { padding: "20px", borderRadius: "16px", border: "1px solid", width: "100%" },
+  resultTitle: { margin: "0 0 5px 0", fontSize: "16px", fontWeight: "700" },
+  resultText: { margin: 0, fontSize: "13px", lineHeight: "1.5" },
+  loadingBox: { textAlign: "center", width: "100%" },
+  spinner: {
+    width: "30px", height: "30px", border: "3px solid #f3f3f3", borderTop: "3px solid #4f46e5",
+    borderRadius: "50%", margin: "0 auto 10px", animation: "spin 1s linear infinite"
   }
 };
+
+// Add this to your Global CSS or Index.css
+// @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
 export default App;
