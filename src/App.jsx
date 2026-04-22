@@ -70,6 +70,24 @@ function App() {
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+
+        :root {
+          --bg-start: #040712;
+          --bg-mid: #090f24;
+          --bg-end: #140d0a;
+          --card-bg: rgba(8, 13, 31, 0.9);
+          --panel-left: #0a1229;
+          --panel-right: #0d1734;
+          --panel-border: #21335d;
+          --text-main: #eef3ff;
+          --text-muted: #9babc9;
+          --text-soft: #7586ab;
+          --accent: #ff8a3d;
+          --accent-strong: #ff6b1a;
+          --accent-shadow: rgba(255, 138, 61, 0.24);
+          --input-bg: #09132c;
+          --input-border: #2a3f6f;
+        }
         
         * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
         
@@ -78,7 +96,10 @@ function App() {
           display: flex;
           justify-content: center;
           align-items: center;
-          background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+          background:
+            radial-gradient(circle at 8% 18%, rgba(255, 127, 43, 0.2) 0%, rgba(255, 127, 43, 0) 32%),
+            radial-gradient(circle at 88% 82%, rgba(255, 107, 26, 0.17) 0%, rgba(255, 107, 26, 0) 35%),
+            linear-gradient(140deg, var(--bg-start) 0%, var(--bg-mid) 52%, var(--bg-end) 100%);
           padding: 1rem;
         }
 
@@ -87,23 +108,23 @@ function App() {
           flex-direction: column;
           width: 100%;
           max-width: 1100px;
-          background: rgba(255, 255, 255, 0.9);
+          background: var(--card-bg);
           backdrop-filter: blur(10px);
           border-radius: 24px;
-          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 24px 44px -18px var(--accent-shadow);
           overflow: hidden;
-          border: 1px solid white;
+          border: 1px solid var(--panel-border);
         }
 
         .left-panel {
           padding: 2rem;
-          background: #fafafa;
-          border-bottom: 1px solid #e2e8f0;
+          background: var(--panel-left);
+          border-bottom: 1px solid var(--panel-border);
         }
 
         .right-panel {
           padding: 2rem;
-          background: #ffffff;
+          background: var(--panel-right);
         }
 
         .form-grid {
@@ -121,23 +142,29 @@ function App() {
         .input-group label {
           font-size: 0.75rem;
           font-weight: 700;
-          color: #64748b;
+          color: var(--text-muted);
           text-transform: uppercase;
           letter-spacing: 0.05em;
         }
 
         .input-group input {
           padding: 0.75rem 1rem;
-          border: 1.5px solid #e2e8f0;
+          border: 1.5px solid var(--input-border);
+          background: var(--input-bg);
+          color: var(--text-main);
           border-radius: 12px;
           font-size: 1rem;
           transition: all 0.2s;
           outline: none;
         }
 
+        .input-group input::placeholder {
+          color: var(--text-soft);
+        }
+
         .input-group input:focus {
-          border-color: #4f46e5;
-          box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+          border-color: var(--accent);
+          box-shadow: 0 0 0 4px rgba(255, 138, 61, 0.15);
         }
 
         .submit-btn {
@@ -150,7 +177,12 @@ function App() {
           font-weight: 700;
           font-size: 1rem;
           cursor: pointer;
-          transition: transform 0.2s, background 0.2s;
+          transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+          box-shadow: 0 8px 20px -10px var(--accent-shadow);
+        }
+
+        .submit-btn:hover {
+          box-shadow: 0 14px 24px -12px var(--accent-shadow);
         }
 
         .submit-btn:active { transform: scale(0.98); }
@@ -187,7 +219,7 @@ function App() {
         /* Desktop Layout Override */
         @media (min-width: 900px) {
           .main-card { flex-direction: row; }
-          .left-panel { flex: 1; border-bottom: none; border-right: 1px solid #e2e8f0; padding: 4rem; }
+          .left-panel { flex: 1; border-bottom: none; border-right: 1px solid var(--panel-border); padding: 4rem; }
           .right-panel { flex: 1.2; padding: 4rem; }
           .form-grid { grid-template-columns: 1fr 1fr; }
         }
@@ -197,28 +229,28 @@ function App() {
         <main className="main-card">
           <section className="left-panel">
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2rem' }}>
-              <span style={{ fontSize: '24px', color: '#4f46e5' }}>✦</span>
-              <b style={{ color: '#1e293b' }}>PathFinder AI</b>
+              <span style={{ fontSize: '24px', color: '#ff8a3d' }}>✦</span>
+              <b style={{ color: '#eef3ff' }}>PathFinder AI</b>
             </div>
             
-            <h1 style={{ fontSize: '2.5rem', fontWeight: 800, color: '#1e293b', lineHeight: 1.1, marginBottom: '1.5rem' }}>
-              Your future, <br/><span style={{ color: '#4f46e5' }}>predicted.</span>
+            <h1 style={{ fontSize: '2.5rem', fontWeight: 800, color: '#eef3ff', lineHeight: 1.1, marginBottom: '1.5rem' }}>
+              Your future, <br/><span style={{ color: '#ff8a3d' }}>predicted.</span>
             </h1>
             
-            <p style={{ color: '#64748b', lineHeight: 1.6, marginBottom: '2rem' }}>
+            <p style={{ color: '#9babc9', lineHeight: 1.6, marginBottom: '2rem' }}>
               Enter your academic and professional details. Our neural network will evaluate your profile against current industry hiring trends.
             </p>
 
             <div className="result-container">
               {!result && !loading && (
-                <p style={{ color: '#94a3b8', fontStyle: 'italic', fontSize: '0.9rem' }}>
+                <p style={{ color: '#7586ab', fontStyle: 'italic', fontSize: '0.9rem' }}>
                   Complete the form to see your placement outlook.
                 </p>
               )}
 
               {loading && (
-                <div style={{ color: '#4f46e5', fontWeight: 600 }}>
-                  <div className="spinner" style={{ borderTopColor: '#4f46e5' }}></div>
+                <div style={{ color: '#ff8a3d', fontWeight: 600 }}>
+                  <div className="spinner" style={{ borderTopColor: '#ff8a3d' }}></div>
                   Analyzing profile...
                 </div>
               )}
@@ -266,7 +298,7 @@ function App() {
               className="submit-btn"
               onClick={handleSubmit}
               disabled={loading}
-              style={{ backgroundColor: loading ? '#94a3b8' : '#4f46e5' }}
+              style={{ background: loading ? '#7586ab' : 'linear-gradient(135deg, #ff8a3d 0%, #ff6b1a 100%)' }}
             >
               {loading ? <><div className="spinner"></div>Working...</> : "Generate AI Report"}
             </button>
